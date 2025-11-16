@@ -1,4 +1,4 @@
-# MidPoint AWS IAM Connector
+# midPoint AWS IAM Connector
 
 A connector for integrating [Evolveum midPoint](https://evolveum.com/midpoint/) with Amazon Web Services (AWS) Identity and Access Management (IAM). Manage AWS IAM users, groups, and policies directly from midPoint.
 
