@@ -1,0 +1,678 @@
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+          xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+          xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3"
+          xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+          xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+          xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+          xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          oid="10000000-0000-0000-0000-000000000230">
+    <name>AWS Connector</name>
+    <description>A3C Amazon Web Services (cloud)</description>
+    <connectorRef relation="org:default" type="c:ConnectorType">
+        <filter>
+            <q:text>c:connectorType = "com.atricore.iam.midpoint.connector.aws.AWSConnector" and c:connectorVersion = "1.1.0-SNAPSHOT"</q:text>
+        </filter>
+    </connectorRef>
+
+    <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
+        <icfc:resultsHandlerConfiguration>
+            <icfc:enableFilteredResultsHandler>false</icfc:enableFilteredResultsHandler>
+        </icfc:resultsHandlerConfiguration>
+        <icfc:configurationProperties
+                xmlns:icfcga="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/com.atricore.iam.evolveum.connector.connector-aws/com.atricore.iam.midpoint.connector.aws.AWSConnector">
+            <icfcga:awsAccessKeyId>my-aws-key-id</icfcga:awsAccessKeyId>
+            <icfcga:awsSecretAccessKey>
+                <t:clearValue>my-aws-access-key</t:clearValue>
+            </icfcga:awsSecretAccessKey>
+            <!--icfcga:awsRegion>us-east-1</icfcga:awsRegion-->
+            <icfcga:allowCache>false</icfcga:allowCache>
+          </icfc:configurationProperties>
+    </connectorConfiguration>
+    <schemaHandling>
+
+        <!-- entitlement/policy -->
+        <objectType>
+
+            <kind>entitlement</kind>
+            <intent>policy</intent>
+
+            <default>false</default>
+            <objectClass>ri:CustomAWSPolicyObjectClass</objectClass>
+            <displayName>AWS Policy</displayName>
+
+            <focus>
+                <type>c:RoleType</type>
+                <!-- You can create an AWS Policy archetype -->
+            </focus>
+
+            <!-- arn -->
+            <attribute>
+                <ref>ri:arn</ref>
+                <displayName>ARN</displayName>
+                <inbound>
+                    <name>set-identifier</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path>$focus/identifier</path>
+                    </target>
+                </inbound>
+                <secondaryIdentifier>true</secondaryIdentifier>
+            </attribute>
+
+            <!-- icfs:name -->
+            <attribute>
+                <ref>icfs:name</ref>
+                <displayName>Name (icfs)</displayName>
+                <inbound>
+                    <name>get-name</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path>$focus/name</path>
+                    </target>
+                </inbound>
+            </attribute>
+
+            <attribute>
+                <ref>ri:isAttachable</ref>
+                <inbound>
+                    <name>get-requestable</name>
+                    <strength>weak</strength>
+                    <target>
+                        <path>$focus/requestable</path>
+                    </target>
+                </inbound>
+            </attribute>
+
+            <attribute>
+                <ref>ri:policyType</ref>
+                <inbound>
+                    <name>get-policy-type</name>
+                    <strength>weak</strength>
+                    <target><path>$focus/description</path></target>
+                </inbound>
+            </attribute>
+
+            <synchronization>
+                <reaction>
+                    <situation>linked</situation>
+                    <actions>
+                        <synchronize/>
+                    </actions>
+                </reaction>
+                <reaction>
+                    <situation>deleted</situation>
+                    <actions>
+                        <deleteFocus/>
+                    </actions>
+                </reaction>
+                <reaction>
+                    <situation>unlinked</situation>
+                    <actions>
+                        <link/>
+                    </actions>
+                </reaction>
+                <reaction>
+                    <situation>unmatched</situation>
+                    <actions>
+                        <addFocus/>
+                    </actions>
+                </reaction>
+            </synchronization>
+
+            <configuredCapabilities xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+                <cap:activation/>
+                <cap:create>
+                    <cap:enabled>false</cap:enabled>
+                </cap:create>
+                <cap:read>
+                    <cap:enabled>true</cap:enabled>
+                </cap:read>
+                <cap:update>
+                    <cap:enabled>true</cap:enabled>
+                    <cap:addRemoveAttributeValues>false</cap:addRemoveAttributeValues>
+                </cap:update>
+                <cap:delete>
+                    <cap:enabled>false</cap:enabled>
+                </cap:delete>
+            </configuredCapabilities>
+
+        </objectType>
+
+        <!-- entitlement/role -->
+        <objectType>
+            <kind>entitlement</kind>
+            <intent>role</intent>
+
+            <default>false</default>
+            <objectClass>ri:CustomAWSRoleObjectClass</objectClass>
+            <displayName>AWS Role</displayName>
+
+            <focus>
+                <type>c:RoleType</type>
+            </focus>
+
+            <!-- uid -->
+            <attribute>
+                <ref>ri:arn</ref>
+                <displayName>UID</displayName>
+                <inbound>
+                    <name>set-identifier</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path>$focus/identifier</path>
+                    </target>
+                </inbound>
+            </attribute>
+
+            <!-- icfs:name -->
+            <attribute>
+                <ref>icfs:name</ref>
+                <displayName>Name (icfs)</displayName>
+                <inbound>
+                    <name>set-name</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path>$focus/name</path>
+                    </target>
+                </inbound>
+
+                <inbound>
+                    <name>get-requestable</name>
+                    <strength>weak</strength>
+                    <expression>
+                        <script>
+                            <code>return true</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path>$focus/requestable</path>
+                    </target>
+                </inbound>
+
+            </attribute>
+
+            <synchronization>
+                <reaction>
+                    <situation>linked</situation>
+                    <actions>
+                        <synchronize/>
+                    </actions>
+                </reaction>
+                <reaction>
+                    <situation>deleted</situation>
+                    <actions>
+
+                    </actions>
+                </reaction>
+                <reaction>
+                    <situation>unlinked</situation>
+                    <actions>
+                        <link/>
+                    </actions>
+                </reaction>
+                <reaction>
+                    <situation>unmatched</situation>
+                    <actions>
+                        <addFocus/>
+                    </actions>
+                </reaction>
+            </synchronization>
+
+            <configuredCapabilities xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+                <cap:activation/>
+                <cap:create>
+                    <cap:enabled>false</cap:enabled>
+                </cap:create>
+                <cap:read>
+                    <cap:enabled>true</cap:enabled>
+                </cap:read>
+                <cap:update>
+                    <cap:enabled>true</cap:enabled>
+                    <cap:addRemoveAttributeValues>false</cap:addRemoveAttributeValues>
+                </cap:update>
+                <cap:delete>
+                    <cap:enabled>false</cap:enabled>
+                </cap:delete>
+                <cap:testConnection>
+                    <cap:enabled>true</cap:enabled>
+                </cap:testConnection>
+                <cap:script>
+                    <cap:enabled>true</cap:enabled>
+                    <cap:host>
+                        <cap:type>connector</cap:type>
+                    </cap:host>
+                </cap:script>
+            </configuredCapabilities>
+
+        </objectType>
+
+        <!-- entitlement/group -->
+        <objectType>
+
+            <kind>entitlement</kind>
+            <intent>group</intent>
+
+            <default>true</default>
+            <objectClass>ri:GroupObjectClass</objectClass>
+            <displayName>AWS Group</displayName>
+
+            <focus>
+                <type>c:RoleType</type>
+            </focus>
+
+            <!-- icfs:uid -->
+            <attribute>
+                <c:ref>icfs:uid</c:ref>
+                <displayName>UID</displayName>
+                <limitations>
+                    <access>
+                        <read>true</read>
+                        <add>false</add>
+                        <modify>false</modify>
+                    </access>
+                </limitations>
+            </attribute>
+
+            <!-- icfs:name -->
+            <attribute>
+                <ref>icfs:name</ref>
+                <displayName>Name (icfs)</displayName>
+                <outbound>
+                    <name>set-name</name>
+                    <strength>weak</strength>
+                    <source>
+                        <path>$focus/name</path>
+                    </source>
+                    <lifecycleState>active</lifecycleState>
+                </outbound>
+
+                <inbound>
+                    <name>get-name</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path>$focus/name</path>
+                    </target>
+                </inbound>
+
+                <inbound>
+                    <name>get-requestable</name>
+                    <strength>weak</strength>
+                    <expression>
+                        <script>
+                            <code>return true</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path>$focus/requestable</path>
+                    </target>
+                </inbound>
+
+
+            </attribute>
+
+            <!-- ri:arn -->
+            <attribute>
+                <ref>ri:arn</ref>
+                <displayName>ARN</displayName>
+                <inbound>
+                    <name>set-identifier</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path>$focus/identifier</path>
+                    </target>
+                </inbound>
+                <secondaryIdentifier>true</secondaryIdentifier>
+            </attribute>
+
+            <synchronization>
+                <reaction>
+                    <situation>linked</situation>
+                    <actions>
+                        <synchronize/>
+                    </actions>
+                </reaction>
+                <reaction>
+                    <situation>deleted</situation>
+                    <actions>
+                        <inactivateResourceObject/>
+                    </actions>
+                </reaction>
+                <reaction>
+                    <situation>unlinked</situation>
+                    <actions>
+                        <link/>
+                    </actions>
+                </reaction>
+                <reaction>
+                    <situation>unmatched</situation>
+                    <actions>
+                        <addFocus/>
+                    </actions>
+                </reaction>
+            </synchronization>
+
+            <configuredCapabilities xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+                <cap:activation/>
+                <cap:create>
+                    <cap:enabled>true</cap:enabled>
+                </cap:create>
+                <cap:read>
+                    <cap:enabled>true</cap:enabled>
+                </cap:read>
+                <cap:update>
+                    <cap:enabled>true</cap:enabled>
+                    <cap:addRemoveAttributeValues>false</cap:addRemoveAttributeValues>
+                </cap:update>
+                <cap:delete>
+                    <cap:enabled>true</cap:enabled>
+                </cap:delete>
+                <cap:testConnection>
+                    <cap:enabled>true</cap:enabled>
+                </cap:testConnection>
+                <cap:script>
+                    <cap:enabled>true</cap:enabled>
+                    <cap:host>
+                        <cap:type>connector</cap:type>
+                    </cap:host>
+                </cap:script>
+            </configuredCapabilities>
+
+        </objectType>
+
+        <!-- account/user -->
+        <objectType>
+            <kind>account</kind>
+            <intent>user</intent>
+            <displayName>AWS Account</displayName>
+            <default>true</default>
+            <objectClass>ri:AccountObjectClass</objectClass>
+
+            <!-- uid -->
+            <attribute>
+                <ref>icfs:uid</ref>
+                <displayName>ICF UID</displayName>
+                <limitations>
+                    <layer>presentation</layer>
+                    <processing>ignore</processing>
+                </limitations>
+            </attribute>
+
+            <attribute>
+                <ref>ri:arn</ref>
+                <displayName>ARN</displayName>
+                <inbound>
+                    <name>set-identifier</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path>$focus/identifier</path>
+                    </target>
+                </inbound>
+            </attribute>
+
+            <!-- name -->
+            <attribute>
+                <ref>icfs:name</ref>
+                <displayName>Login</displayName>
+
+                <correlator/>
+                <outbound>
+                    <name>set-name</name>
+                    <strength>weak</strength>
+                    <source>
+                        <path>$focus/name</path>
+                    </source>
+                </outbound>
+
+                <inbound>
+                    <name>get-name</name>
+                    <strength>weak</strength>
+
+                    <use>correlation</use>
+                    <expression>
+                        <script>
+                            <code>
+                                log.info(">>>> get-name: " + input + "@atricore.com")
+                                return input + "@atricore.com"
+                            </code>
+                        </script>
+                    </expression>
+
+                    <target>
+                        <path>$focus/name</path>
+                    </target>
+
+                </inbound>
+
+            </attribute>
+
+            <!-- admin status ! -->
+
+            <!-- push password if not found -->
+            <!--credentials>
+                <password>
+                    <outbound>
+                        <name>set-password</name>
+                        <strength>weak</strength>
+                    </outbound>
+                </password>
+            </credentials-->
+
+            <!-- capabilities -->
+            <configuredCapabilities xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+                <cap:activation>
+                    <cap:enabled>false</cap:enabled>
+                </cap:activation>
+                <cap:credentials>
+                    <cap:enabled>true</cap:enabled>
+                    <cap:password>
+                        <cap:enabled>true</cap:enabled>
+                        <cap:returnedByDefault>false</cap:returnedByDefault>
+                    </cap:password>
+                </cap:credentials>
+                <cap:create>
+                    <cap:enabled>true</cap:enabled>
+                </cap:create>
+                <cap:read>
+                    <cap:enabled>true</cap:enabled>
+                </cap:read>
+                <cap:update>
+                    <cap:enabled>true</cap:enabled>
+                    <cap:addRemoveAttributeValues>false</cap:addRemoveAttributeValues>
+                </cap:update>
+                <cap:delete>
+                    <cap:enabled>true</cap:enabled>
+                </cap:delete>
+                <cap:testConnection>
+                    <cap:enabled>true</cap:enabled>
+                </cap:testConnection>
+                <cap:script>
+                    <cap:enabled>true</cap:enabled>
+                    <cap:host>
+                        <cap:type>connector</cap:type>
+                    </cap:host>
+                </cap:script>
+            </configuredCapabilities>
+
+            <!-- sync configuration -->
+            <synchronization>
+
+                <reaction>
+                    <situation>linked</situation>
+                    <actions>
+                        <synchronize/>
+                    </actions>
+                </reaction>
+
+                <reaction>
+                    <situation>deleted</situation>
+                    <actions>
+                        <inactivateResourceObject/>
+                    </actions>
+                </reaction>
+
+                <reaction>
+                    <situation>unlinked</situation>
+                    <actions>
+                        <link/>
+                    </actions>
+                </reaction>
+
+                <reaction>
+                    <situation>unmatched</situation>
+                    <actions>
+                        <addFocus/>
+                    </actions>
+                </reaction>
+
+            </synchronization>
+
+        </objectType>
+
+        <!-- entitlement/group with entitlement/policy -->
+        <associationType>
+            <name>groupPolicies</name>
+            <subject>
+                <objectType>
+                    <kind>entitlement</kind>
+                    <intent>group</intent>
+                </objectType>
+
+                <association>
+                    <ref>ri:groupPolicies</ref>
+                    <tolerant>false</tolerant>
+
+                    <outbound>
+                        <name>policy-assignments-to-aws-group-membership</name>
+                        <strength>strong</strength>
+                        <expression>
+                            <associationConstruction>
+                                <objectRef>
+                                    <mapping>
+                                        <expression>
+                                            <associationFromLink/>
+                                        </expression>
+                                    </mapping>
+                                </objectRef>
+                            </associationConstruction>
+                        </expression>
+                    </outbound>
+
+                    <inbound>
+                        <name>aws-group-membership-to-policy-assignments</name>
+                        <strength>strong</strength>
+                        <expression>
+                            <associationSynchronization xsi:type="c:AssociationSynchronizationExpressionEvaluatorType">
+                                <objectRef>
+                                    <ref>ri:groupPolicies</ref>
+                                    <mapping>
+                                        <name>shadowOwner-into-targetRef</name>
+                                        <strength>strong</strength>
+                                        <expression>
+                                            <shadowOwnerReferenceSearch/>
+                                        </expression>
+                                        <target>
+                                            <path>targetRef</path>
+                                        </target>
+                                    </mapping>
+                                </objectRef>
+                                <correlation>
+                                    <correlators>
+                                        <items>
+                                            <name>membership-correlation</name>
+                                            <enabled>true</enabled>
+                                            <item>
+                                                <ref>targetRef</ref>
+                                            </item>
+                                        </items>
+                                    </correlators>
+                                </correlation>
+                                <synchronization>
+                                    <reaction>
+                                        <name>unmatched-add</name>
+                                        <situation>unmatched</situation>
+                                        <actions>
+                                            <addFocusValue/>
+                                        </actions>
+                                    </reaction>
+                                    <reaction >
+                                        <name>matched-synchronize</name>
+                                        <situation>matched</situation>
+                                        <actions>
+                                            <synchronize/>
+                                        </actions>
+                                    </reaction>
+                                    <reaction>
+                                        <name>indirectly-matched-ignore</name>
+                                        <situation>matchedIndirectly</situation>
+                                    </reaction>
+                                </synchronization>
+                            </associationSynchronization>
+                        </expression>
+                    </inbound>
+
+                </association>
+            </subject>
+            <object>
+                <objectType>
+                    <kind>entitlement</kind>
+                    <intent>policy</intent>
+                </objectType>
+            </object>
+        </associationType>
+
+    </schemaHandling>
+
+    <capabilities>
+        <native xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:schema/>
+            <cap:credentials>
+                <cap:password>
+                    <cap:returnedByDefault>false</cap:returnedByDefault>
+                </cap:password>
+            </cap:credentials>
+            <cap:create/>
+            <cap:read>
+                <cap:returnDefaultAttributesOption>false</cap:returnDefaultAttributesOption>
+            </cap:read>
+            <cap:update>
+                <cap:addRemoveAttributeValues>true</cap:addRemoveAttributeValues>
+            </cap:update>
+            <cap:delete/>
+            <cap:testConnection/>
+            <cap:script>
+                <cap:host>
+                    <cap:type>connector</cap:type>
+                </cap:host>
+            </cap:script>
+            <cap:pagedSearch/>
+        </native>
+
+        <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:references>
+                <cap:type>
+                    <cap:name>ri:groupPolicies</cap:name>
+                    <cap:subject>
+                        <cap:delineation>
+                            <cap:objectClass>ri:GroupObjectClass</cap:objectClass>
+                        </cap:delineation>
+                        <cap:primaryBindingAttributeRef>ri:attachedPolicies</cap:primaryBindingAttributeRef>
+                        <cap:localItemName>ri:groupPolicies</cap:localItemName>
+                    </cap:subject>
+
+                    <cap:object>
+                        <cap:delineation>
+                            <cap:objectClass>ri:CustomAWSPolicyObjectClass</cap:objectClass>
+                        </cap:delineation>
+                        <cap:primaryBindingAttributeRef>icfs:name</cap:primaryBindingAttributeRef>
+                    </cap:object>
+                    <cap:direction>subjectToObject</cap:direction>
+                </cap:type>
+
+            </cap:references>
+        </configured>
+
+    </capabilities>
+
+
+</resource>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Console appender for general logs with colors -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) [%thread] %cyan(%logger{15}) - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Root logger level -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+    </root>
+
+    <!-- Set specific loggers for AWS and LocalStack -->
+    <logger name="com.atricore.iam.midpoint.connector.aws" level="DEBUG" />
+    <logger name="org.testcontainers" level="INFO" />
+    <logger name="software.amazon.awssdk" level="INFO" />
+
+    <!-- Set to DEBUG to see more AWS SDK details when troubleshooting -->
+    <logger name="software.amazon.awssdk.auth" level="DEBUG" />
+    <logger name="software.amazon.awssdk.http" level="INFO" />
+    <logger name="software.amazon.awssdk.regions" level="INFO" />
+    <logger name="software.amazon.awssdk.services.iam" level="DEBUG" />
+</configuration>
